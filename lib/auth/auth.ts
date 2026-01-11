@@ -42,11 +42,21 @@ export async function getCurrentUser(): Promise<User | null> {
         const authHeader = headersList.get('Authorization')
 
         if (authHeader?.startsWith('Bearer ')) {
-            const token = authHeader.replace('Bearer ', '')
-            const { data: { user: headerUser } } = await supabase.auth.getUser(token)
+            const accessToken = authHeader.replace('Bearer ', '')
+
+            // Set the session with the provided access token
+            // This properly initializes the auth state with the token
+            const { data: { user: headerUser }, error } = await supabase.auth.getUser(accessToken)
+
+            if (error) {
+                console.error('[AUTH] Bearer token validation failed:', error.message)
+                return null
+            }
+
             return headerUser
         }
-    } catch (error) {
+    } catch (error: any) {
+        console.error('[AUTH] Error checking Authorization header:', error.message)
         // Ignore error (headers() might throw in some contexts)
     }
 
